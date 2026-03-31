@@ -459,6 +459,7 @@ public class ConfigSchematic extends BaseSchematic {
                     return new OutcomePreview(outcome.moduleKey, key, name, category, level, glyph, itemStack, definition.displayType, outcome.requiredTools,
                             outcome.material.getApplicableItemStacks());
                 })
+                .filter(Objects::nonNull)
                 .filter(Filter.distinct(preview -> preview.variantKey))
                 .toArray(OutcomePreview[]::new);
     }
