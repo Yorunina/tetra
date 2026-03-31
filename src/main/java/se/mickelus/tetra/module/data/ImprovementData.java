@@ -1,6 +1,7 @@
 package se.mickelus.tetra.module.data;
 
 import com.google.gson.*;
+import org.spongepowered.asm.mixin.Unique;
 
 import javax.annotation.ParametersAreNonnullByDefault;
 import java.lang.reflect.Type;
@@ -26,6 +27,13 @@ public class ImprovementData extends VariantData {
      * specified group will remove any other improvement on that slot which has a matching group.
      */
     public String group = null;
+
+    public boolean infinite = false;
+
+
+    public boolean isInfinite() {
+        return this.infinite;
+    }
 
     public int getLevel() {
         return level;

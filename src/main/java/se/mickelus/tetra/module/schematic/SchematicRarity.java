@@ -8,6 +8,9 @@ import se.mickelus.tetra.gui.GuiColors;
 public enum SchematicRarity {
 
     hone(GuiColors.hone),
+    infinite(0Xf5e3a4),
+    ancient(0X74baf7),
+    inspired(0Xa6ed91),
     temporary(GuiColors.temporarySchematic),
     basic(GuiColors.normal);
 

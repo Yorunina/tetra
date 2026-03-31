@@ -1,6 +1,7 @@
 package se.mickelus.tetra.module;
 
 
+import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
@@ -44,6 +45,7 @@ public abstract class ItemModuleMajor extends ItemModule {
 
     public static void addImprovement(ItemStack itemStack, String slot, String improvement, int level) {
         IModularItem item = (IModularItem) itemStack.getItem();
+        logger.debug("Adding improvement {} with level {}", improvement, level);
         CastOptional.cast(item.getModuleFromSlot(itemStack, slot), ItemModuleMajor.class)
                 .filter(module -> module.acceptsImprovementLevel(improvement, level))
                 .ifPresent(module -> module.addImprovement(itemStack, improvement, level));
@@ -145,7 +147,7 @@ public abstract class ItemModuleMajor extends ItemModule {
             return Arrays.stream(improvements)
                     .filter(improvement -> improvementKey.equals(improvement.key))
                     .filter(improvement -> tag.contains(slotTagKey + ":" + improvement.key))
-                    .filter(improvement -> improvement.level == tag.getInt(slotTagKey + ":" + improvement.key))
+                    .filter(improvement -> improvement.level == tag.getInt(slotTagKey + ":" + improvement.key) || improvement.infinite)
                     .findAny()
                     .orElse(null);
         }
@@ -158,7 +160,7 @@ public abstract class ItemModuleMajor extends ItemModule {
             CompoundTag tag = itemStack.getTag();
             return Arrays.stream(improvements)
                     .filter(improvement -> tag.contains(slotTagKey + ":" + improvement.key))
-                    .filter(improvement -> improvement.level == tag.getInt(slotTagKey + ":" + improvement.key))
+                    .filter(improvement -> improvement.level == tag.getInt(slotTagKey + ":" + improvement.key) || improvement.infinite)
                     .toArray(ImprovementData[]::new);
         }
 
@@ -190,10 +192,14 @@ public abstract class ItemModuleMajor extends ItemModule {
     public boolean acceptsImprovementLevel(String improvementKey, int level) {
         return Arrays.stream(improvements)
                 .filter(improvement -> improvementKey.equals(improvement.key))
-                .anyMatch(improvement -> level == improvement.level);
+                .anyMatch(improvement -> level == improvement.level || improvement.infinite);
     }
 
     public void addImprovement(ItemStack itemStack, String improvementKey, int level) {
+        ImprovementData improvementData = this.getImprovement(itemStack, improvementKey);
+        if (improvementData != null && improvementData.infinite) {
+            level = this.getImprovementLevel(itemStack, improvementKey) + level;
+        }
         removeCollidingImprovements(itemStack, improvementKey, level);
         itemStack.getOrCreateTag().putInt(slotTagKey + ":" + improvementKey, level);
     }
@@ -331,7 +337,17 @@ public abstract class ItemModuleMajor extends ItemModule {
     @Override
     public Multimap<Attribute, AttributeModifier> getAttributeModifiers(ItemStack itemStack) {
         return Arrays.stream(getImprovements(itemStack))
-                .map(improvement -> improvement.attributes)
+                .map(improvement -> {
+                    if (improvement.infinite && improvement.attributes != null) {
+                        Multimap<Attribute, AttributeModifier> multimap = ArrayListMultimap.create();
+                        improvement.attributes.forEach((attribute, attributeModifier) -> {
+                            multimap.put(attribute, new AttributeModifier(attributeModifier.getName(), attributeModifier.getAmount() * this.getImprovementLevel(itemStack, improvement.key), attributeModifier.getOperation()));
+                        });
+                        return multimap;
+                    } else {
+                        return improvement.attributes;
+                    }
+                })
                 .filter(Objects::nonNull)
                 .reduce(super.getAttributeModifiers(itemStack), AttributeHelper::merge);
     }
@@ -339,13 +355,27 @@ public abstract class ItemModuleMajor extends ItemModule {
     @Override
     public ItemProperties getProperties(ItemStack itemStack) {
         return Arrays.stream(getImprovements(itemStack))
-                .reduce(super.getProperties(itemStack), ItemProperties::merge, ItemProperties::merge);
+                .map(improvement -> {
+                    if (improvement.infinite) {
+                        float levelMultiplier = this.getImprovementLevel(itemStack, improvement.key);
+                        return improvement.multiply(levelMultiplier);
+                    }
+                    return improvement;
+                })
+                .reduce(super.getProperties(itemStack),ItemProperties::merge, ItemProperties::merge);
     }
 
     @Override
     public EffectData getEffectData(ItemStack itemStack) {
         return Arrays.stream(getImprovements(itemStack))
-                .map(improvement -> improvement.effects)
+                .map(improvement -> {
+                    if (improvement.infinite) {
+                        float levelMultiplier = this.getImprovementLevel(itemStack, improvement.key);
+                        return EffectData.multiply(improvement.effects, levelMultiplier, levelMultiplier);
+                    } else {
+                        return improvement.effects;
+                    }
+                })
                 .filter(Objects::nonNull)
                 .reduce(super.getEffectData(itemStack), EffectData::merge);
     }

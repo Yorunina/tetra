@@ -12,6 +12,7 @@ import se.mickelus.tetra.aspect.ItemAspect;
 import se.mickelus.tetra.craftingeffect.StackMode;
 import se.mickelus.tetra.items.modular.IModularItem;
 import se.mickelus.tetra.module.ItemModuleMajor;
+import se.mickelus.tetra.module.data.ImprovementData;
 import se.mickelus.tetra.module.schematic.UpgradeSchematic;
 import se.mickelus.tetra.util.StreamHelper;
 
@@ -38,13 +39,18 @@ public class ApplyImprovementOutcome implements CraftingEffectOutcome {
                     AtomicBoolean result = new AtomicBoolean(false);
                     for (Map.Entry<String, Integer> improvement : improvements.entrySet()) {
                         String key = improvement.getKey();
+                        ImprovementData improvementData = module.getImprovement(upgradedStack, key);
                         if (key.startsWith("#")) {
                             ItemAspect aspect = ItemAspect.get(key.substring(1));
 
                             Arrays.stream(module.getAcceptedImprovements(aspect))
                                     .collect(StreamHelper.toShuffledList())
                                     .stream()
-                                    .map(k -> new ImprovementPair(k, stacking.evaluate(module.getImprovementLevel(upgradedStack, k), improvement.getValue())))
+                                    .map(k -> {
+                                        int level = improvement.getValue();
+                                        if (improvementData == null || !improvementData.infinite) level = stacking.evaluate(module.getImprovementLevel(upgradedStack, k), improvement.getValue());
+                                        return new ImprovementPair(k, level);
+                                    })
                                     .filter(pair -> module.acceptsImprovementLevel(pair.key, pair.level))
                                     .findFirst()
                                     .ifPresent(pair -> {
@@ -53,7 +59,8 @@ public class ApplyImprovementOutcome implements CraftingEffectOutcome {
                                     });
 
                         } else {
-                            int level = stacking.evaluate(module.getImprovementLevel(upgradedStack, key), improvement.getValue());
+                            int level = improvement.getValue();
+                            if (improvementData == null || !improvementData.infinite) level = stacking.evaluate(module.getImprovementLevel(upgradedStack, key), improvement.getValue());
                             if (module.acceptsImprovementLevel(key, level)) {
                                 module.addImprovement(upgradedStack, key, level);
                                 result.set(true);

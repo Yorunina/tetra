@@ -80,6 +80,7 @@ public class ScrollData {
                 .filter(list -> list.size() > 0)
                 .map(list -> list.getCompound(0))
                 .map(tag -> tag.getString("ribbon"))
+                .filter(hex -> !hex.isEmpty())
                 .map(hex -> (int) Long.parseLong(hex, 16))
                 .orElse(0);
     }

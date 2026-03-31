@@ -6,8 +6,7 @@ plugins {
     id 'eclipse'
     id 'idea'
     id 'maven-publish'
-    id 'net.neoforged.gradle' version '[6.0.18,6.2)'
-    id 'org.parchmentmc.librarian.forgegradle' version '1.+'
+    id 'net.minecraftforge.gradle' version '[6.0.16,6.2)'
     id 'org.spongepowered.mixin' version '0.7.+'
 }
 
@@ -84,14 +83,25 @@ repositories {
         url = "https://maven.theillusivec4.top/"
     }
     maven { url = 'https://maven.blamejared.com/' }
+    maven {
+        name = "Curse maven"
+        url = "https://cursemaven.com"
+        content {
+            includeGroup "curse.maven"
+        }
+    }
+    maven { // Mantle && TCon
+        name 'DVS1 Maven FS'
+        url 'https://dvs1.progwml6.com/files/maven'
+    }
+    mavenCentral()
 }
 
 dependencies {
-    minecraft "net.neoforged:forge:${minecraft_version}-${forge_version}"
-    implementation fg.deobf("se.mickelus.mutil:mutil:${mutil_version}")
-    runtimeOnly fg.deobf("top.theillusivec4.curios:curios-forge:${curios_version}")
-    compileOnly fg.deobf("top.theillusivec4.curios:curios-forge:${curios_version}:api")
-
+    minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
+//    implementation fg.deobf("se.mickelus.mutil:mutil:${mutil_version}")
+    implementation fg.deobf("curse.maven:curios-forge-309927:6418456")
+    implementation fg.deobf("curse.maven:mutil-351914:6418901")
     annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
 }
 
