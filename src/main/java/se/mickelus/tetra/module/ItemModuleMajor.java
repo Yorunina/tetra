@@ -46,7 +46,6 @@ public abstract class ItemModuleMajor extends ItemModule {
 
     public static void addImprovement(ItemStack itemStack, String slot, String improvement, int level) {
         IModularItem item = (IModularItem) itemStack.getItem();
-        logger.debug("Adding improvement {} with level {}", improvement, level);
         CastOptional.cast(item.getModuleFromSlot(itemStack, slot), ItemModuleMajor.class)
                 .filter(module -> module.acceptsImprovementLevel(improvement, level))
                 .ifPresent(module -> module.addImprovement(itemStack, improvement, level));

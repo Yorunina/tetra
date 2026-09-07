@@ -101,7 +101,7 @@ dependencies {
     minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
 //    implementation fg.deobf("se.mickelus.mutil:mutil:${mutil_version}")
     implementation fg.deobf("curse.maven:curios-forge-309927:6418456")
-    implementation fg.deobf("curse.maven:mutil-351914:6418901")
+    implementation fg.deobf("curse.maven:mutil-351914:7772906")
     annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
 }
 
